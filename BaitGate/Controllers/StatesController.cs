@@ -17,6 +17,7 @@ namespace BaitGate.Controllers
         private readonly SEDContext _context;
         private IClientServices _clientServices;
         private readonly ILogger<HEDController> _logger;
+        private static HttpClient client = new HttpClient();
 
         public StatesController(SEDContext context, IClientServices clientServices, ILogger<HEDController> logger)
         {
@@ -65,33 +66,29 @@ namespace BaitGate.Controllers
         private async Task SendState(DocumentState documentState)
         {
             
-            
             try
             {
-                using (HttpClient client = new HttpClient())
+                if (_clientServices.Clients == null)
                 {
-                    if (_clientServices.Clients == null)
-                    {
-                        throw new Exception("problem with db clients");
-                    }
-                    string address = _clientServices.Clients.First(p => p.Id == documentState.Client).URLState;
+                    throw new Exception("problem with db clients");
+                }
+                string address = _clientServices.Clients.First(p => p.Id == documentState.Client).URLState;
 
-                    client.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue("application/json"));
-                    string jsonString = JsonSerializer.Serialize(documentState);
-                    var response = await client.PostAsync(address, new StringContent(jsonString, Encoding.UTF8, "application/json"));
-                    response.EnsureSuccessStatusCode();
-                    documentState.isSent = true;
-                    var contents = await response.Content.ReadAsStringAsync();
-                    DocResponse? docResponse = JsonSerializer.Deserialize<DocResponse>(contents);
-                    if (docResponse == null)
-                    {
-                        throw new Exception("problem with deserialization DocResponse");
-                    }
-                    if (docResponse.status == 0)
-                    {
-                        throw new Exception(docResponse.date + " : " + docResponse.error);
-                    }
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+                string jsonString = JsonSerializer.Serialize(documentState);
+                var response = await client.PostAsync(address, new StringContent(jsonString, Encoding.UTF8, "application/json"));
+                response.EnsureSuccessStatusCode();
+                documentState.isSent = true;
+                var contents = await response.Content.ReadAsStringAsync();
+                DocResponse? docResponse = JsonSerializer.Deserialize<DocResponse>(contents);
+                if (docResponse == null)
+                {
+                    throw new Exception("problem with deserialization DocResponse");
+                }
+                if (docResponse.status == 0)
+                {
+                    throw new Exception(docResponse.date + " : " + docResponse.error);
                 }
             }
             catch (Exception e)

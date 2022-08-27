@@ -22,6 +22,7 @@ namespace BaitGate.Controllers
         private readonly SEDContext _context;
         private IClientServices _clientServices;
         private readonly ILogger<HEDController> _logger;
+        private static HttpClient client = new HttpClient();
 
         public DocumentsController(SEDContext context, IClientServices clientServices, ILogger<HEDController> logger)
         {
@@ -127,7 +128,6 @@ namespace BaitGate.Controllers
 
         private async Task SendDocument(Document document)
         {
-            HttpClient client = new HttpClient();
             try
             {
                 if(_clientServices.Clients == null){
